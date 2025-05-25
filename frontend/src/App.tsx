@@ -13,12 +13,30 @@ function App() {
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const moveToRight = (item: FoodItem) => {
-    // console.log("move", movedItems["Fruits"]);
     setFoodList((prev) => prev.filter((food) => food.id !== item.id));
     setMovedItems((prev) => ({
       ...prev,
       [item.type]: [...prev[item.type], item],
     }));
+
+    timers.current[item.id] = setTimeout(() => {
+      moveBackToMain(item);
+    }, 5000);
+  };
+
+  const moveBackToMain = (item: FoodItem) => {
+    const timer = timers.current[item.id];
+    if (timer) {
+      clearTimeout(timer);
+      delete timers.current[item.id];
+    }
+
+    setMovedItems((prev) => ({
+      ...prev,
+      [item.type]: prev[item.type].filter((i) => i.id !== item.id),
+    }));
+
+    setFoodList((prev) => [...prev, item]);
   };
 
   useEffect(() => {
@@ -31,16 +49,20 @@ function App() {
         }));
         setFoodList(withIds);
       });
-    console.log("se");
   }, []);
 
   return (
     <>
-      <div className="flex w-screen h-screen gap-10">
+      <div className="sm:flex w-screen h-screen gap-10">
         <MainList items={foodList} onClick={moveToRight} />
-        <section className="flex gap-4">
+        <section className="sm:flex gap-4">
           {FOOD_TYPES.map((type) => (
-            <ItemColumn key={type} title={type} items={movedItems[type]} />
+            <ItemColumn
+              key={type}
+              title={type}
+              items={movedItems[type]}
+              onClick={moveBackToMain}
+            />
           ))}
         </section>
       </div>
